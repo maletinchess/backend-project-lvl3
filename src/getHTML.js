@@ -18,8 +18,6 @@ export const getFileNameFromUrl = (pageURL) => {
   return `${mappedFilename}.html`;
 };
 
-// ...//
-
 const getHTML = async (pageURL, dest) => {
   const response = await axios.get(pageURL);
   const { data } = response;
