@@ -1,3 +1,3 @@
-import getHTML from './getHTML.js';
+import loadHTML from './loadHTML.js';
 
-export default getHTML;
+export default loadHTML;

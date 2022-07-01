@@ -3,8 +3,7 @@ import path, { dirname } from 'path';
 import { promises as fs } from 'fs';
 import nock from 'nock';
 import { fileURLToPath } from 'url';
-import getHTML from '../src/index.js';
-import { getFileNameFromUrl } from '../src/getHTML.js';
+import loadHTML from '../src/index.js';
 
 /* eslint-disable no-underscore-dangle */
 const __filename = fileURLToPath(import.meta.url);
@@ -16,32 +15,57 @@ const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', 
 /* global test, expect, beforeAll, beforeEach */
 /* eslint no-undef: "error" */
 
-let expected;
+let body;
+let expectedPage;
+let expectedImageBuffer; // make image fixture..//
 let dest;
-const url = 'https://ru.hexlet.io/projects/4/members/22511';
+const url = 'https://ru.hexlet.io/courses';
+const imageSRC = '/assets/professions/nodejs.png'; // ...image path//
+
+nock.disableNetConnect();
 
 beforeAll(async () => {
-  expected = await fs.readFile(getFixturePath('expected.html'), 'utf-8');
+  body = await fs.readFile(getFixturePath('body-fixture.html'), 'utf-8');
+  expectedPage = await fs.readFile(getFixturePath('expected-page-fixture.html'), 'utf-8');
+  const image = await fs.readFile(getFixturePath('node-js-image-fixture.png'));
+  expectedImageBuffer = Buffer.from(image);
 });
 
 beforeEach(async () => {
-  dest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
   nock('https://ru.hexlet.io')
-    .get('/projects/4/members/22511')
-    .reply(200, expected);
-  await getHTML(url, dest);
+    .get('/courses')
+    .reply(200, body)
+    .get(imageSRC)
+    .reply(200, expectedImageBuffer);
+
+  dest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+
+  await loadHTML(url, dest);
 });
 
-test('getHTML', async () => {
-  const actualPath = path.join(dest, getFileNameFromUrl(url));
-  const actual = await fs.readFile(actualPath, 'utf-8');
-  expect(actual).toEqual(expected);
+test('html-load', async () => {
+  const actualFilename = 'ru-hexlet-io-courses.html';
+  const actualPath = path.join(dest, actualFilename);// ...define manually filename//
+  const actualHTML = await fs.readFile(actualPath, 'utf-8');
+  expect(actualHTML).toEqual(expectedPage.trim());
 });
 
-test('request succeed', async () => {
+test('image-load', async () => {
+  const actualFilename = 'ru-hexlet-io-assets-professions-nodejs.png';
+  const actualImageFilePath = path.join(dest, 'files', actualFilename);
+  const actualImage = await fs.readFile(actualImageFilePath);
+  const actualImageBuffer = Buffer.from(actualImage);
+  console.log(dest);
+  expect(actualImageBuffer).toEqual(expectedImageBuffer);
+});
+
+test('scope-isDone', async () => {
   const scope = nock('https://ru.hexlet.io')
-    .get('/projects/4/members/22511')
-    .reply(200, expected);
-  await getHTML(url, dest);
+    .get('/courses')
+    .reply(200, body)
+    .get(imageSRC)
+    .reply(200, expectedImageBuffer);
+  const anotherDest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+  await loadHTML(url, anotherDest);
   expect(scope.isDone()).toBe(true);
 });
