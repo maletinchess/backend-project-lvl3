@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { program } from 'commander';
-import { getFileNameFromUrl } from '../src/utils.js';
-import loadHTML from '../src/index.js';
+import { getFileNameFromUrl } from '../src/asyncAwaitApi/utils.js';
+import loadHTML from '../src/asyncAwaitApi/index.js';
 
 program
   .version('0.0.1')

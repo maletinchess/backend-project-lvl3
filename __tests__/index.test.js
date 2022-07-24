@@ -3,7 +3,7 @@ import path, { dirname } from 'path';
 import { promises as fs } from 'fs';
 import nock from 'nock';
 import { fileURLToPath } from 'url';
-import loadHTML from '../src/index.js';
+import loadHTML from '../src/promiseBasedApi/index.js';
 
 /* eslint-disable no-underscore-dangle */
 const __filename = fileURLToPath(import.meta.url);
@@ -20,7 +20,9 @@ let expectedPage;
 let expectedImageBuffer; // make image fixture..//
 let dest;
 const url = 'https://ru.hexlet.io/courses';
-const imageSRC = '/assets/professions/nodejs.png'; // ...image path//
+const filesdirname = 'ru-hexlet-io-courses_files';
+const imageSRC = '/assets/professions/nodejs.png';
+const scriptSRC = '/packs/js/runtime.js';
 
 nock.disableNetConnect();
 
@@ -36,7 +38,9 @@ beforeEach(async () => {
     .get('/courses')
     .reply(200, body)
     .get(imageSRC)
-    .reply(200, expectedImageBuffer);
+    .reply(200, expectedImageBuffer)
+    .get(scriptSRC)
+    .reply(200, 'Hello, world!');
 
   dest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
@@ -52,11 +56,17 @@ test('html-load', async () => {
 
 test('image-load', async () => {
   const actualFilename = 'ru-hexlet-io-assets-professions-nodejs.png';
-  const actualImageFilePath = path.join(dest, 'files', actualFilename);
+  const actualImageFilePath = path.join(dest, filesdirname, actualFilename);
   const actualImage = await fs.readFile(actualImageFilePath);
   const actualImageBuffer = Buffer.from(actualImage);
-  console.log(dest);
   expect(actualImageBuffer).toEqual(expectedImageBuffer);
+});
+
+test('script-load', async () => {
+  const actualFilename = 'ru-hexlet-io-packs-js-runtime.js';
+  const actualFilePath = path.join(dest, filesdirname, actualFilename);
+  const content = await fs.readFile(actualFilePath, 'utf-8');
+  expect(content).toBe('Hello, world!');
 });
 
 test('scope-isDone', async () => {
@@ -64,7 +74,9 @@ test('scope-isDone', async () => {
     .get('/courses')
     .reply(200, body)
     .get(imageSRC)
-    .reply(200, expectedImageBuffer);
+    .reply(200, expectedImageBuffer)
+    .get(scriptSRC)
+    .reply(200, 'Hello, world!');
   const anotherDest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
   await loadHTML(url, anotherDest);
   expect(scope.isDone()).toBe(true);
