@@ -15,7 +15,7 @@ export default (currentUrl, dest) => {
   const currentURL = new URL(currentUrl);
   const sourcesDirname = buildSourcesDirname(currentURL);
   const destToSaveFiles = path.join(dest, sourcesDirname);
-  console.log(destToSaveFiles);
+  console.log(destToSaveFiles, 'DIRECTORY_PATH');
   return axios.get(currentUrl)
     .then(({ data }) => {
       html = data;
@@ -25,9 +25,11 @@ export default (currentUrl, dest) => {
     })
     .catch((e) => console.log(e))
     .then(() => fs.mkdir(destToSaveFiles))
-    .catch((e) => console.log(e))
+    .catch((e) => console.log(e, 'MAKEDIR_ERR'))
     .then(() => imageLoader(html, destToSaveFiles, currentURL))
-    .catch((e) => console.log(e), 'IMAGE_ERROR')
+    .catch((e) => console.log(e, 'IMAGE-LOAD_ERR'))
     .then(() => srcLoader(html, destToSaveFiles, currentURL))
-    .catch((e) => console.log(e));
+    .catch((e) => console.log(e, 'SCRIPT-LOAD_ERR'))
+    .then(() => linkLoader(html, destToSaveFiles, currentURL))
+    .catch((e) => console.log('LINK-LOAD_ERR', e));
 };

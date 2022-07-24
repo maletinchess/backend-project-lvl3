@@ -23,6 +23,7 @@ const url = 'https://ru.hexlet.io/courses';
 const filesdirname = 'ru-hexlet-io-courses_files';
 const imageSRC = '/assets/professions/nodejs.png';
 const scriptSRC = '/packs/js/runtime.js';
+const linkHref = '/assets/application.css';
 
 nock.disableNetConnect();
 
@@ -40,7 +41,11 @@ beforeEach(async () => {
     .get(imageSRC)
     .reply(200, expectedImageBuffer)
     .get(scriptSRC)
-    .reply(200, 'Hello, world!');
+    .reply(200, 'Hello, world!')
+    .get(linkHref)
+    .reply(200, 'CSS_STYLES')
+    .get('/courses')
+    .reply(200, body);
 
   dest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
@@ -69,6 +74,18 @@ test('script-load', async () => {
   expect(content).toBe('Hello, world!');
 });
 
+test('link-load', async () => {
+  const actualCssFilename = 'ru-hexlet-io-assets-application.css';
+  const actualCssFilePath = path.join(dest, filesdirname, actualCssFilename);
+  const contentCss = await fs.readFile(actualCssFilePath, 'utf-8');
+  expect(contentCss).toBe('CSS_STYLES');
+
+  const actualHtmlFilename = 'ru-hexlet-io-courses.html';
+  const actualHtmlFilePath = path.join(dest, filesdirname, actualHtmlFilename);
+  const contentHtml = await fs.readFile(actualHtmlFilePath, 'utf-8');
+  expect(contentHtml).toBe(expectedPage.trim());
+});
+
 test('scope-isDone', async () => {
   const scope = nock('https://ru.hexlet.io')
     .get('/courses')
@@ -76,7 +93,11 @@ test('scope-isDone', async () => {
     .get(imageSRC)
     .reply(200, expectedImageBuffer)
     .get(scriptSRC)
-    .reply(200, 'Hello, world!');
+    .reply(200, 'Hello, world!')
+    .get(linkHref)
+    .reply(200, 'CSS_STYLES')
+    .get('/courses')
+    .reply(200, body);
   const anotherDest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
   await loadHTML(url, anotherDest);
   expect(scope.isDone()).toBe(true);
