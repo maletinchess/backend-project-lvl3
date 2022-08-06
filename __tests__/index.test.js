@@ -3,7 +3,7 @@ import path, { dirname } from 'path';
 import { promises as fs } from 'fs';
 import nock from 'nock';
 import { fileURLToPath } from 'url';
-import loadHTML from '../src/promiseBasedApi/index.js';
+import loadHTML from '../src/index.js';
 
 /* eslint-disable no-underscore-dangle */
 const __filename = fileURLToPath(import.meta.url);
@@ -17,8 +17,8 @@ const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', 
 
 let body;
 let expectedPage;
-let expectedImageBuffer; // make image fixture..//
 let dest;
+let image;
 const url = 'https://ru.hexlet.io/courses';
 const filesdirname = 'ru-hexlet-io-courses_files';
 const imageSRC = '/assets/professions/nodejs.png';
@@ -30,8 +30,7 @@ nock.disableNetConnect();
 beforeAll(async () => {
   body = await fs.readFile(getFixturePath('body-fixture.html'), 'utf-8');
   expectedPage = await fs.readFile(getFixturePath('expected-page-fixture.html'), 'utf-8');
-  const image = await fs.readFile(getFixturePath('node-js-image-fixture.png'));
-  expectedImageBuffer = Buffer.from(image);
+  image = await fs.readFile(getFixturePath('node-js-image-fixture.png'));
 });
 
 beforeEach(async () => {
@@ -39,7 +38,7 @@ beforeEach(async () => {
     .get('/courses')
     .reply(200, body)
     .get(imageSRC)
-    .reply(200, expectedImageBuffer)
+    .reply(200, image)
     .get(scriptSRC)
     .reply(200, 'Hello, world!')
     .get(linkHref)
@@ -63,8 +62,7 @@ test('image-load', async () => {
   const actualFilename = 'ru-hexlet-io-assets-professions-nodejs.png';
   const actualImageFilePath = path.join(dest, filesdirname, actualFilename);
   const actualImage = await fs.readFile(actualImageFilePath);
-  const actualImageBuffer = Buffer.from(actualImage);
-  expect(actualImageBuffer).toEqual(expectedImageBuffer);
+  expect(actualImage.length).toEqual(image.length);
 });
 
 test('script-load', async () => {
@@ -91,7 +89,7 @@ test('scope-isDone', async () => {
     .get('/courses')
     .reply(200, body)
     .get(imageSRC)
-    .reply(200, expectedImageBuffer)
+    .reply(200, image)
     .get(scriptSRC)
     .reply(200, 'Hello, world!')
     .get(linkHref)

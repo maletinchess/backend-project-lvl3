@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { program } from 'commander';
-import { getFileNameFromUrl } from '../src/asyncAwaitApi/utils.js';
-import loadHTML from '../src/asyncAwaitApi/index.js';
+import loadHTML from '../src/index.js';
 
 program
   .version('0.0.1')
@@ -9,7 +8,7 @@ program
   .arguments('<url> [dirpath]')
   .action((url, dirpath = process.cwd()) => {
     loadHTML(url, dirpath);
-    console.log(getFileNameFromUrl(url));
+    console.log(dirpath);
   });
 
 program.parse(process.argv);
