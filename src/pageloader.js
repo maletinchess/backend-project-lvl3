@@ -66,7 +66,7 @@ export default (pageUrl, dest) => {
   const { URL } = url;
   const baseURL = new URL(pageUrl);
   const sourcesDirname = buildSourcesDirname(baseURL);
-  const destToSaveFiles = path.join(dest, sourcesDirname, 'XXX');
+  const destToSaveFiles = path.join(dest, sourcesDirname);
   return axios.get(pageUrl)
     .then(({ data }) => {
       pageLoadDebug(data);
