@@ -4,6 +4,7 @@ import { promises as fs } from 'fs';
 import nock from 'nock';
 import { fileURLToPath } from 'url';
 import loadHTML from '../src/index.js';
+import { makeRandomString } from '../src/utils.js';
 
 /* eslint-disable no-underscore-dangle */
 const __filename = fileURLToPath(import.meta.url);
@@ -12,7 +13,7 @@ const __dirname = dirname(__filename);
 
 const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
 
-/* global test, expect, beforeAll, beforeEach */
+/* global test, expect, beforeAll, beforeEach, describe */
 /* eslint no-undef: "error" */
 
 let body;
@@ -99,4 +100,38 @@ test('scope-isDone', async () => {
   const anotherDest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
   await loadHTML(url, anotherDest);
   expect(scope.isDone()).toBe(true);
+});
+
+describe('error-cases', () => {
+  test('http-errors', async () => {
+    nock(/wrong\.url\.wrong/)
+      .get(/no-response/)
+      .replyWithError('Wrong url')
+      .get('/404')
+      .reply(404);
+
+    const destForErrCase = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-err-'));
+
+    expect.assertions(2);
+
+    await expect(loadHTML('https://wrong.url.wrong/no-response', destForErrCase)).rejects.toMatch('Wrong url');
+    await expect(loadHTML('https://wrong.url.wrong/404', destForErrCase)).rejects.toMatch('Request failed with status code 404');
+  });
+
+  test('fs-errors', async () => {
+    nock('https://validurl.ru')
+      .get('/testerr')
+      .reply(200, body);
+    expect.assertions(2);
+
+    const fakedir = path.join(os.tmpdir(), makeRandomString());
+    const sys = '/sys';
+
+    await expect(loadHTML('https://validurl.ru/testerr', fakedir)).rejects.toMatch('ENOENT');
+    await expect(loadHTML('https://validurl.ru/testerr', sys)).rejects.toMatch('EACCES');
+  });
+
+  test('fs-error: file exist', async () => {
+    await expect(loadHTML(url, dest)).rejects.toMatch('EEXIST');
+  });
 });

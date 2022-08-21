@@ -11,19 +11,40 @@ const isLocal = (sourceLink, currentURL) => {
 
 export const handleAxiosError = (error) => {
   if (error.response) {
-    console.error(error.response.data);
+    console.error(error.message);
     console.error(error.response.status);
     console.error(error.response.headers);
   } else if (error.request) {
-    console.error((error.request));
+    console.error(error.request);
   } else {
     // Something happened in setting up the request that triggered an Error
     console.error('Error', error.message);
   }
+  throw error.message;
 };
 
 export const handleSystemError = (error) => {
-  console.log(error.code);
+  const { code, path, syscall } = error;
+  console.error(code, path, syscall);
+  throw error.message;
+};
+
+export const handleError = (e) => {
+  if (e.isAxiosError) {
+    handleAxiosError(e);
+  } else {
+    handleSystemError(e);
+  }
+};
+
+export const makeRandomString = (length = 5) => {
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
+  let randomString = '';
+  for (let i = 0; i < length; i += 1) {
+    randomString = `${randomString}${possible.charAt(Math.floor(Math.random() * possible.length))}`;
+  }
+
+  return randomString;
 };
 
 export default isLocal;

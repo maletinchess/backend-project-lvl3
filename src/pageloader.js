@@ -4,11 +4,14 @@ import path from 'path';
 import { promises as fs } from 'fs';
 import debug from 'debug';
 import axiosDebug from 'axios-debug-log';
+import Listr from 'listr';
 
 import { buildSourcesDirname, buildFilename } from './buildPathApi.js';
 import replaceSources from './modifyHTML.js';
 
 import extractUrls from './extractUrls.js';
+
+import { handleError } from './utils.js';
 
 const pageLoadDebug = debug('page-loader');
 
@@ -27,47 +30,36 @@ axiosDebug({
   },
 });
 
-const fetchContent = (urlToFetchContent, contentType) => {
-  if (contentType === 'image') {
-    return axios.get(
-      urlToFetchContent,
-      {
-        responseType: 'arraybuffer',
-        validateStatus: (status) => status === 200,
-      },
-    );
-  }
-
-  return axios.get(urlToFetchContent);
-};
-
-const saveContent = (fetchData, dest, baseURL) => {
-  const { urlToFetchContent, contentType } = fetchData;
-  const output = path.join(dest, buildFilename(baseURL, urlToFetchContent));
-  const promise = fetchContent(urlToFetchContent, contentType)
-    .then(({ data }) => {
-      pageLoadDebug(data);
-      const dataToSave = baseURL.href === urlToFetchContent ? replaceSources(data, baseURL) : data;
-      fs.writeFile(output, dataToSave);
-    }).catch((e) => console.error(e.message));
-  return promise;
-};
-
 const fileloader = (html, destToSaveFiles, baseURL) => {
   const fetchDatas = extractUrls(html, baseURL);
-  pageLoadDebug(fetchDatas);
-  const promises = fetchDatas.map((fetchData) => saveContent(fetchData, destToSaveFiles, baseURL));
-  return Promise.all(promises);
+  const tasks = new Listr(
+    fetchDatas.map(({ urlToFetchContent }) => {
+      const task = axios.get(urlToFetchContent, { responseType: 'arraybuffer', validateStatus: (status) => status === 200 })
+        .then(({ data }) => {
+          const filepath = path.join(destToSaveFiles, buildFilename(baseURL, urlToFetchContent));
+          const dataToSave = baseURL.href === urlToFetchContent
+            ? replaceSources(data, baseURL)
+            : data;
+          return fs.writeFile(filepath, dataToSave);
+        })
+        .catch(handleError);
+      return { title: urlToFetchContent, task: () => task };
+    }),
+    { concurrent: true },
+  );
+
+  return tasks.run();
 };
 
 export default (pageUrl, dest) => {
   let html;
-  console.log(dest);
   const { URL } = url;
   const baseURL = new URL(pageUrl);
+  console.log(dest);
   const sourcesDirname = buildSourcesDirname(baseURL);
   const destToSaveFiles = path.join(dest, sourcesDirname);
-  return axios.get(pageUrl)
+  return fs.mkdir(destToSaveFiles)
+    .then(() => axios.get(pageUrl))
     .then(({ data }) => {
       pageLoadDebug(data);
       html = data;
@@ -75,8 +67,8 @@ export default (pageUrl, dest) => {
       const htmlFilename = buildFilename(baseURL);
       fs.writeFile(path.join(dest, htmlFilename), localHTML);
     })
-    .then(() => fs.mkdir(destToSaveFiles))
-    .catch((e) => console.error(e.code))
     .then(() => fileloader(html, destToSaveFiles, baseURL))
-    .catch((e) => console.error(e.code));
+    .catch((e) => {
+      handleError(e);
+    });
 };
