@@ -79,7 +79,7 @@ test('link-load', async () => {
   const actualHtmlFilename = 'ru-hexlet-io-courses.html';
   const actualHtmlFilePath = path.join(dest, filesdirname, actualHtmlFilename);
   const contentHtml = await fs.readFile(actualHtmlFilePath, 'utf-8');
-  expect(contentHtml).toBe(expectedPage.trim());
+  expect(contentHtml).toBe(body);
 });
 
 test('scope-isDone', async () => {
@@ -111,8 +111,8 @@ describe('error-cases', () => {
 
     expect.assertions(2);
 
-    await expect(loadHTML('https://wrong.url.wrong/no-response', destForErrCase)).rejects.toMatch('Wrong url');
-    await expect(loadHTML('https://wrong.url.wrong/404', destForErrCase)).rejects.toMatch('Request failed with status code 404');
+    await expect(loadHTML('https://wrong.url.wrong/no-response', destForErrCase)).rejects.toThrow();
+    await expect(loadHTML('https://wrong.url.wrong/404', destForErrCase)).rejects.toThrow(/bad response/);
   });
 
   test('fs-errors', async () => {
@@ -124,11 +124,11 @@ describe('error-cases', () => {
     const fakedir = path.join(os.tmpdir(), makeRandomString());
     const sys = '/sys';
 
-    await expect(loadHTML('https://validurl.ru/testerr', fakedir)).rejects.toMatch('ENOENT');
-    await expect(loadHTML('https://validurl.ru/testerr', sys)).rejects.toMatch('EACCES');
+    await expect(loadHTML('https://validurl.ru/testerr', fakedir)).rejects.toThrow(/ENOENT/);
+    await expect(loadHTML('https://validurl.ru/testerr', sys)).rejects.toThrow(/EACCES/);
   });
 
   test('fs-error: file exist', async () => {
-    await expect(loadHTML(url, dest)).rejects.toMatch('EEXIST');
+    await expect(loadHTML(url, dest)).rejects.toThrow(/EEXIST/);
   });
 });
