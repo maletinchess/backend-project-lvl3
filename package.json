@@ -2,7 +2,7 @@
   "name": "@hexlet/code",
   "version": "1.0.0",
   "description": "hexlet backend project, page-loader",
-  "main": "index.js",
+  "main": "src/pageloader.js",
   "type": "module",
   "bin": {
     "pageloader": "bin/pageloader.js"
