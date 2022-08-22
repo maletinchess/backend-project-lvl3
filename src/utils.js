@@ -14,7 +14,7 @@ export const handleAxiosError = (error) => {
     console.error(error.message);
     console.error(error.response.status);
     console.error(error.response.headers);
-    throw error.message;
+    throw new Error('bad response');
   }
   throw error.message;
 };
