@@ -16,7 +16,7 @@ export const handleAxiosError = (error) => {
     console.error(error.response.headers);
     throw new Error('bad response');
   }
-  throw error.message;
+  throw new Error(`${error.message}`);
 };
 
 export const handleSystemError = (error) => {
