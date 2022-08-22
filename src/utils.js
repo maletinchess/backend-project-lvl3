@@ -16,6 +16,7 @@ export const handleAxiosError = (error) => {
     console.error(error.response.headers);
   } else if (error.request) {
     console.error(error.request);
+    throw error.message;
   } else {
     // Something happened in setting up the request that triggered an Error
     console.error('Error', error.message);
