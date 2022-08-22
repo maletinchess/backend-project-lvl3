@@ -48,7 +48,7 @@ const fileloader = (html, destToSaveFiles, baseURL) => {
   return tasks.run();
 };
 
-export default (pageUrl, dest) => {
+export default (pageUrl, dest = process.cwd()) => {
   let html;
   const { URL } = url;
   const baseURL = new URL(pageUrl);
