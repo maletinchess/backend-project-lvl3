@@ -37,10 +37,7 @@ const fileloader = (html, destToSaveFiles, baseURL) => {
       const task = axios.get(urlToFetchContent, { responseType: 'arraybuffer', validateStatus: (status) => status === 200 })
         .then(({ data }) => {
           const filepath = path.join(destToSaveFiles, buildFilename(baseURL, urlToFetchContent));
-          const dataToSave = baseURL.href === urlToFetchContent
-            ? replaceSources(data, baseURL)
-            : data;
-          return fs.writeFile(filepath, dataToSave);
+          return fs.writeFile(filepath, data);
         })
         .catch(handleError);
       return { title: urlToFetchContent, task: () => task };
