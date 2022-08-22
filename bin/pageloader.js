@@ -6,9 +6,11 @@ program
   .version('0.0.1')
   .description('Page loader utility')
   .arguments('<url> [dirpath]')
-  .action((url, dirpath = process.cwd()) => {
-    loadHTML(url, dirpath)
-      .then(() => console.log(dirpath))
+  .description('Page loader utility')
+  .option('-o, --output [dir]', 'output dir', process.cwd())
+  .action((url) => {
+    loadHTML(url, program.opts().output)
+      .then((filepath) => console.log(filepath))
       .catch((e) => {
         console.error(e.message);
         process.exit(1);
