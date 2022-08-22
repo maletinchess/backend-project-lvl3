@@ -22,7 +22,7 @@ export const handleAxiosError = (error) => {
 export const handleSystemError = (error) => {
   const { code, path, syscall } = error;
   console.error(code, path, syscall);
-  throw error.message;
+  throw new Error(`${error.message}`);
 };
 
 export const handleError = (e) => {
