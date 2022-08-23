@@ -14,13 +14,16 @@ const replaceSymbols = (word) => word
     return '-';
   }).join('');
 
-const mapFilename = (filename) => {
+const mapFilename = (filename, toHTML = false) => {
   const parsed = path.parse(filename);
   const { dir, ext, name } = parsed;
 
   const newDir = replaceSymbols(dir);
   const newName = replaceSymbols(name);
-  const newExt = ext === '' ? '.html' : ext;
+  const newExt = ext === '' || toHTML ? '.html' : ext;
+  if (dir === '') {
+    return `${newName}${newExt}`;
+  }
   const newFileName = `${newDir}-${newName}${newExt}`;
 
   return newFileName;
@@ -34,7 +37,7 @@ export const buildSourcesDirname = (parsedURL) => {
 
 export const buildFilename = (baseURL, input = '/') => {
   if (input === '/') {
-    return mapFilename(path.join(baseURL.hostname, baseURL.pathname));
+    return mapFilename(path.join(baseURL.hostname, baseURL.pathname), true);
   }
   const newUrl = new URL(input, baseURL.toString());
   const { hostname, pathname } = newUrl;

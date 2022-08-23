@@ -52,7 +52,6 @@ export default (pageUrl, dest = process.cwd()) => {
   let html;
   const { URL } = url;
   const baseURL = new URL(pageUrl);
-  console.log(dest);
   const sourcesDirname = buildSourcesDirname(baseURL);
   const destToSaveFiles = path.join(dest, sourcesDirname);
   return fs.mkdir(destToSaveFiles)

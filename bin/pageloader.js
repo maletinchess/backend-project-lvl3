@@ -10,7 +10,7 @@ program
   .option('-o, --output [dir]', 'output dir', process.cwd())
   .action((url) => {
     loadHTML(url, program.opts().output)
-      .then((filepath) => console.log(filepath))
+      .then(() => console.log(program.opts().output))
       .catch((e) => {
         console.error(e.message);
         process.exit(1);
