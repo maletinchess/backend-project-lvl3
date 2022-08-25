@@ -10,7 +10,10 @@ program
   .option('-o, --output [dir]', 'output dir', process.cwd())
   .action((url) => {
     loadHTML(url, program.opts().output)
-      .then(() => console.log(program.opts().output))
+      .then((filename) => {
+        const message = `Page was successfully downloaded into ${filename}`;
+        console.log(message);
+      })
       .catch((e) => {
         console.error(e.message);
         process.exit(1);

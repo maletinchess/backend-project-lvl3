@@ -6,7 +6,7 @@ import debug from 'debug';
 import axiosDebug from 'axios-debug-log';
 import Listr from 'listr';
 
-import { buildSourcesDirname, buildFilename } from './buildPathApi.js';
+import { buildSourceDirname, buildSourceFilename, buildmainHtmlFilename } from './buildpath.js';
 import replaceSources from './modifyHTML.js';
 
 import extractUrls from './extractUrls.js';
@@ -36,7 +36,10 @@ const fileloader = (html, destToSaveFiles, baseURL) => {
     fetchDatas.map(({ urlToFetchContent }) => {
       const task = axios.get(urlToFetchContent, { responseType: 'arraybuffer', validateStatus: (status) => status === 200 })
         .then(({ data }) => {
-          const filepath = path.join(destToSaveFiles, buildFilename(baseURL, urlToFetchContent));
+          const filepath = path.join(
+            destToSaveFiles,
+            buildSourceFilename(baseURL, urlToFetchContent),
+          );
           return fs.writeFile(filepath, data);
         })
         .catch(handleError);
@@ -50,9 +53,10 @@ const fileloader = (html, destToSaveFiles, baseURL) => {
 
 export default (pageUrl, dest = process.cwd()) => {
   let html;
+  let output;
   const { URL } = url;
   const baseURL = new URL(pageUrl);
-  const sourcesDirname = buildSourcesDirname(baseURL);
+  const sourcesDirname = buildSourceDirname(baseURL);
   const destToSaveFiles = path.join(dest, sourcesDirname);
   return fs.mkdir(destToSaveFiles)
     .then(() => axios.get(pageUrl))
@@ -60,10 +64,13 @@ export default (pageUrl, dest = process.cwd()) => {
       pageLoadDebug(data);
       html = data;
       const localHTML = replaceSources(data, baseURL);
-      const htmlFilename = buildFilename(baseURL);
-      fs.writeFile(path.join(dest, htmlFilename), localHTML);
+      const htmlFilename = buildmainHtmlFilename(baseURL, '/', true);
+      const filepath = path.join(dest, htmlFilename);
+      output = path.resolve(process.cwd(), filepath);
+      fs.writeFile(filepath, localHTML);
     })
     .then(() => fileloader(html, destToSaveFiles, baseURL))
+    .then(() => output)
     .catch((e) => {
       handleError(e);
     });

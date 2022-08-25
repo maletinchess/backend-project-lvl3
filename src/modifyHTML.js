@@ -7,7 +7,7 @@ import _ from 'lodash';
 import prettier from 'prettier';
 import * as cheerio from 'cheerio';
 import isLocal from './utils.js';
-import { buildSourcePath, buildSourcesDirname } from './buildPathApi.js';
+import { buildSourcePath, buildSourceDirname } from './buildpath.js';
 
 const getLocalNodesByTagname = (bindedHtml, tagName, baseURL) => {
   const mapping = {
@@ -26,7 +26,7 @@ const getLocalNodesByTagname = (bindedHtml, tagName, baseURL) => {
 };
 
 const replaceSources = (html, baseURL) => {
-  const dirName = buildSourcesDirname(baseURL);
+  const dirName = buildSourceDirname(baseURL);
 
   const bindedHtml = cheerio.load(html);
 
