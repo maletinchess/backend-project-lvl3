@@ -61,15 +61,18 @@ export default (pageUrl, dest = process.cwd()) => {
   return fs.mkdir(destToSaveFiles)
     .then(() => axios.get(pageUrl))
     .then(({ data }) => {
-      pageLoadDebug(data);
       html = data;
       const localHTML = replaceSources(data, baseURL);
       const htmlFilename = buildmainHtmlFilename(baseURL, '/', true);
       const filepath = path.join(dest, htmlFilename);
       output = path.resolve(process.cwd(), filepath);
+      pageLoadDebug(`saving HTML to ${filepath}`);
       fs.writeFile(filepath, localHTML);
     })
-    .then(() => fileloader(html, destToSaveFiles, baseURL))
+    .then(() => {
+      pageLoadDebug(`saving sources ${destToSaveFiles}`);
+      return fileloader(html, destToSaveFiles, baseURL);
+    })
     .then(() => output)
     .catch((e) => {
       handleError(e);
