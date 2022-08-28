@@ -15,9 +15,11 @@ import { handleError } from './utils.js';
 
 const pageLoadDebug = debug('page-loader');
 
+const isDebugEnv = process.env.DEBUG;
+
 axiosDebug({
   request(httpDebug, config) {
-    httpDebug(`Request with ${config.headers['content-type']}`);
+    httpDebug(`Request with ${config.url}`);
   },
   response(httpDebug, response) {
     httpDebug(
@@ -45,7 +47,7 @@ const fileloader = (html, destToSaveFiles, baseURL) => {
         .catch(handleError);
       return { title: urlToFetchContent, task: () => task };
     }),
-    { concurrent: true },
+    { concurrent: true, renderer: isDebugEnv ? 'silent' : 'default' },
   );
 
   return tasks.run();
