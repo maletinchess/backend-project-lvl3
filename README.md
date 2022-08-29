@@ -17,4 +17,4 @@ Debug:
 
 Ошибки:
 
-<a href="https://asciinema.org/a/5IlepZAZQHBijs3TIO1lGsWAF?speed=3" target="_blank"><img src="https://asciinema.org/a/5IlepZAZQHBijs3TIO1lGsWAF.svg" /></a>
+<a href="https://asciinema.org/a/slgFlO6XXl3uZWsqxlJdo0VFm?speed=3" target="_blank"><img src="https://asciinema.org/a/slgFlO6XXl3uZWsqxlJdo0VFm.svg" /></a>
