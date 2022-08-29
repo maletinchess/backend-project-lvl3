@@ -11,10 +11,10 @@
 
 <a href="https://asciinema.org/a/0wNIpljslINY5fo8Mc5UM3c2v?speed=3" target="_blank"><img src="https://asciinema.org/a/0wNIpljslINY5fo8Mc5UM3c2v.svg" /></a>
 
-Ошибки:
+Debug:
 
 <a href="https://asciinema.org/a/8p4tRuN1cSvMApAXKw3S0vHit?speed=3" target="_blank"><img src="https://asciinema.org/a/8p4tRuN1cSvMApAXKw3S0vHit.svg" /></a>
 
-Debug:
+Ошибки:
 
 <a href="https://asciinema.org/a/5IlepZAZQHBijs3TIO1lGsWAF?speed=3" target="_blank"><img src="https://asciinema.org/a/5IlepZAZQHBijs3TIO1lGsWAF.svg" /></a>
