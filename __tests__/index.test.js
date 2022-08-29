@@ -15,13 +15,14 @@ const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', 
 
 let body;
 let expectedPage;
-let dest;
 let image;
+let dest;
+
 const url = 'https://ru.hexlet.io/courses';
 const filesdirname = 'ru-hexlet-io-courses_files';
-const imageSRC = '/assets/professions/nodejs.png';
-const scriptSRC = '/packs/js/runtime.js';
-const linkHref = '/assets/application.css';
+const imagePath = '/assets/professions/nodejs.png';
+const scriptPath = '/packs/js/runtime.js';
+const linkPath = '/assets/application.css';
 
 nock.disableNetConnect();
 
@@ -35,11 +36,11 @@ beforeEach(async () => {
   nock('https://ru.hexlet.io')
     .get('/courses')
     .reply(200, body)
-    .get(imageSRC)
+    .get(imagePath)
     .reply(200, image)
-    .get(scriptSRC)
+    .get(scriptPath)
     .reply(200, 'Hello, world!')
-    .get(linkHref)
+    .get(linkPath)
     .reply(200, 'CSS_STYLES')
     .get('/courses')
     .reply(200, body);
@@ -86,16 +87,16 @@ test('scope-isDone', async () => {
   const scope = nock('https://ru.hexlet.io')
     .get('/courses')
     .reply(200, body)
-    .get(imageSRC)
+    .get(imagePath)
     .reply(200, image)
-    .get(scriptSRC)
+    .get(scriptPath)
     .reply(200, 'Hello, world!')
-    .get(linkHref)
+    .get(linkPath)
     .reply(200, 'CSS_STYLES')
     .get('/courses')
     .reply(200, body);
-  const anotherDest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-  await loadHTML(url, anotherDest);
+  const scopeCheckDest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+  await loadHTML(url, scopeCheckDest);
   expect(scope.isDone()).toBe(true);
 });
 
