@@ -2,7 +2,7 @@
 
 import os from 'os';
 import path, { dirname } from 'path';
-import { promises as fs, readFile } from 'fs';
+import { promises as fs } from 'fs';
 import nock from 'nock';
 import { fileURLToPath } from 'url';
 import loadHTML from '../src/index.js';
@@ -16,7 +16,6 @@ const __dirname = dirname(__filename);
 const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
 
 let body;
-let expectedPage;
 let image;
 let dest;
 
