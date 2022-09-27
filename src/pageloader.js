@@ -1,5 +1,5 @@
 import axios from 'axios';
-import url from 'url';
+import { URL } from 'url';
 import path from 'path';
 import { promises as fs } from 'fs';
 import debug from 'debug';
@@ -13,7 +13,7 @@ import extractUrls from './extractUrls.js';
 
 import { handleError } from './utils.js';
 
-const pageLoadDebug = debug('page-loader');
+const log = debug('page-loader');
 
 const isDebugEnv = process.env.DEBUG;
 
@@ -56,7 +56,6 @@ const fileloader = (html, destToSaveFiles, baseURL) => {
 export default (pageUrl, dest = process.cwd()) => {
   let html;
   let output;
-  const { URL } = url;
   const baseURL = new URL(pageUrl);
   const sourcesDirname = buildSourceDirname(baseURL);
   const destToSaveFiles = path.join(dest, sourcesDirname);
@@ -68,11 +67,11 @@ export default (pageUrl, dest = process.cwd()) => {
       const htmlFilename = buildmainHtmlFilename(baseURL, '/', true);
       const filepath = path.join(dest, htmlFilename);
       output = path.resolve(process.cwd(), filepath);
-      pageLoadDebug(`saving HTML to ${filepath}`);
+      log(`saving HTML to ${filepath}`);
       fs.writeFile(filepath, localHTML);
     })
     .then(() => {
-      pageLoadDebug(`saving sources ${destToSaveFiles}`);
+      log(`saving sources ${destToSaveFiles}`);
       return fileloader(html, destToSaveFiles, baseURL);
     })
     .then(() => output)

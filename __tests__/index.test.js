@@ -21,6 +21,12 @@ let dest;
 
 const fixture = {};
 
+const fixturesfilenames = {
+  script: 'script-fixture.js',
+  css: 'link-fixture.css',
+  image: 'node-js-image-fixture.png',
+};
+
 const url = 'https://ru.hexlet.io/courses';
 
 const filesdirname = 'ru-hexlet-io-courses_files';
@@ -57,11 +63,11 @@ beforeEach(async () => {
     .get('/courses')
     .reply(200, body)
     .get(imagePath)
-    .reply(200, image)
+    .replyWithFile(200, getFixturePath(fixturesfilenames.image))
     .get(scriptPath)
-    .reply(200, fixture.script)
+    .replyWithFile(200, getFixturePath(fixturesfilenames.script))
     .get(linkPath)
-    .reply(200, fixture.css)
+    .replyWithFile(200, getFixturePath(fixturesfilenames.css))
     .get('/courses')
     .reply(200, body);
 
@@ -107,7 +113,7 @@ describe('positive cases', () => {
 });
 
 describe('negative-cases', () => {
-  test('http-errors', async () => {
+  test('http-errors - loadpage - status code 404', async () => {
     nock(/wrong\.url\.wrong/)
       .get(/no-response/)
       .replyWithError('Wrong url')
@@ -122,7 +128,8 @@ describe('negative-cases', () => {
     await expect(loadHTML('https://wrong.url.wrong/404', destForErrCase)).rejects.toThrow(/bad response/);
   });
 
-  test('fs-errors', async () => {
+  test('fs-errors - file does not exist, access error', async () => {
+    // razdelit access i not exist //
     nock('https://validurl.ru')
       .get('/testerr')
       .reply(200, body);
