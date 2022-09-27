@@ -47,7 +47,6 @@ nock.disableNetConnect();
 
 beforeAll(async () => {
   body = await fs.readFile(getFixturePath('body-fixture.html'), 'utf-8');
-  expectedPage = await fs.readFile(getFixturePath('expected-page-fixture.html'), 'utf-8');
   image = await fs.readFile(getFixturePath('node-js-image-fixture.png'));
   fixture.css = await fs.readFile(getFixturePath('link-fixture.css', 'utf-8'));
   fixture.script = await fs.readFile(getFixturePath('script-fixture.js', 'utf-8'));
