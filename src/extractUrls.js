@@ -1,8 +1,6 @@
-import url from 'url';
+import { URL } from 'url';
 import * as cheerio from 'cheerio';
 import isLocal from './utils.js';
-
-const { URL } = url;
 
 const mapToUrl = (inputs, currentURL, local = true) => {
   const mappedUrls = inputs.map((input) => new URL(input, currentURL.toString()).toString());
@@ -31,9 +29,9 @@ const extractImages = (html) => {
 };
 
 const extractUrls = (html, baseURL) => {
-  const links = mapToUrl(extractLinks(html), baseURL).map((l) => ({ urlToFetchContent: l, contentType: 'link' }));
-  const scripts = mapToUrl(extractScripts(html), baseURL).map((s) => ({ urlToFetchContent: s, contentType: 'script' }));
-  const images = mapToUrl(extractImages(html), baseURL).map((i) => ({ urlToFetchContent: i, contentType: 'image' }));
+  const links = mapToUrl(extractLinks(html), baseURL).map((l) => ({ urlToFetchContent: l }));
+  const scripts = mapToUrl(extractScripts(html), baseURL).map((s) => ({ urlToFetchContent: s }));
+  const images = mapToUrl(extractImages(html), baseURL).map((i) => ({ urlToFetchContent: i }));
   return [...links, ...scripts, ...images];
 };
 

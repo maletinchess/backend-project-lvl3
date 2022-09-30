@@ -34,6 +34,7 @@ axiosDebug({
 
 const fileloader = (html, destToSaveFiles, baseURL) => {
   const fetchDatas = extractUrls(html, baseURL);
+  // ... EXTRACT URLS .. //
   const tasks = new Listr(
     fetchDatas.map(({ urlToFetchContent }) => {
       const task = axios.get(urlToFetchContent, { responseType: 'arraybuffer', validateStatus: (status) => status === 200 })
@@ -64,6 +65,7 @@ export default (pageUrl, dest = process.cwd()) => {
     .then(({ data }) => {
       html = data;
       const localHTML = replaceSources(data, baseURL);
+      // REPLACE SOURCES //
       const htmlFilename = buildmainHtmlFilename(baseURL, '/', true);
       const filepath = path.join(dest, htmlFilename);
       output = path.resolve(process.cwd(), filepath);
