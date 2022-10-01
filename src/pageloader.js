@@ -89,6 +89,7 @@ const modifyHTML = (html, baseURL) => {
 
 const fileloader = (html, destToSaveFiles, baseURL) => {
   const fetchDatas = extractUrls(html, baseURL);
+  console.log(fetchDatas);
   // ... EXTRACT URLS .. //
   const tasks = new Listr(
     fetchDatas.map(({ urlToFetchContent }) => {
