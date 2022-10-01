@@ -9,7 +9,7 @@ import * as cheerio from 'cheerio';
 import isLocal from './utils.js';
 import { buildSourcePath, buildSourceDirname } from './buildpath.js';
 
-const getLocalNodesByTagname = (bindedHtml, tagName, baseURL) => {
+export const getLocalNodesByTagname = (bindedHtml, tagName, baseURL) => {
   const mapping = {
     img: (node) => node.attribs.src,
     script: (node) => node.attribs.src,

@@ -15,55 +15,48 @@ const __dirname = dirname(__filename);
 
 const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
 
-let body;
-let image;
 let dest;
 
-const fixture = {};
+const fixturesfilenames = {
+  script: 'script-fixture.js',
+  css: 'link-fixture.css',
+  image: 'node-js-image-fixture.png',
+  htmlMain: 'body-fixture.html',
+  htmlSource: 'body-fixture.html',
+};
 
 const url = 'https://ru.hexlet.io/courses';
-
 const filesdirname = 'ru-hexlet-io-courses_files';
-const imagePath = '/assets/professions/nodejs.png';
-const scriptPath = '/packs/js/runtime.js';
-const linkPath = '/assets/application.css';
 
-const formatsArray = [
+const formats = [
   {
-    format: 'htmlSource', fixturepath: 'body-fixture.html', expectedData: '', expectedFilename: 'ru-hexlet-io-courses.html', actualData: '',
+    format: 'htmlSource', expectedData: '', expectedFilename: 'ru-hexlet-io-courses.html', actualData: '',
   },
   {
-    format: 'image', fixturepath: 'node-js-image-fixture.png', expectedData: '', expectedFilename: 'ru-hexlet-io-assets-professions-nodejs.png', actualData: '',
+    format: 'image', expectedData: '', expectedFilename: 'ru-hexlet-io-assets-professions-nodejs.png', actualData: '',
   },
   {
-    format: 'css', fixturepath: 'link-fixture.css', expectedData: '', expectedFilename: 'ru-hexlet-io-assets-application.css', actualData: '',
+    format: 'css', expectedData: '', expectedFilename: 'ru-hexlet-io-assets-application.css', actualData: '',
   },
   {
-    format: 'script', fixturepath: 'script-fixture.js', expectedData: '', expectedFilename: 'ru-hexlet-io-packs-js-runtime.js', actualData: '',
+    format: 'script', expectedData: '', expectedFilename: 'ru-hexlet-io-packs-js-runtime.js', actualData: '',
   },
 ];
 
 nock.disableNetConnect();
 
-beforeAll(async () => {
-  body = await fs.readFile(getFixturePath('body-fixture.html'), 'utf-8');
-  image = await fs.readFile(getFixturePath('node-js-image-fixture.png'));
-  fixture.css = await fs.readFile(getFixturePath('link-fixture.css', 'utf-8'));
-  fixture.script = await fs.readFile(getFixturePath('script-fixture.js', 'utf-8'));
-});
-
 beforeEach(async () => {
   nock(/ru\.hexlet\.io/)
-    .get('/courses')
-    .reply(200, body)
-    .get(imagePath)
-    .reply(200, image)
-    .get(scriptPath)
-    .reply(200, fixture.script)
-    .get(linkPath)
-    .reply(200, fixture.css)
-    .get('/courses')
-    .reply(200, body);
+    .get(/\/courses/)
+    .replyWithFile(200, getFixturePath(fixturesfilenames.htmlMain))
+    .get(/\/assets\/professions\/nodejs\.png/)
+    .replyWithFile(200, getFixturePath(fixturesfilenames.image))
+    .get(/\/packs\/js\/runtime\.js/)
+    .replyWithFile(200, getFixturePath(fixturesfilenames.script))
+    .get(/\/assets\/application\.css/)
+    .replyWithFile(200, getFixturePath(fixturesfilenames.css))
+    .get(/\/courses/)
+    .replyWithFile(200, getFixturePath(fixturesfilenames.htmlSource));
 
   dest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
@@ -71,8 +64,8 @@ beforeEach(async () => {
 });
 
 describe('positive cases', () => {
-  test.each(formatsArray)('$format load', async (item) => {
-    const data = await fs.readFile(getFixturePath(item.fixturepath), 'utf-8');
+  test.each(formats)('$format load', async (item) => {
+    const data = await fs.readFile(getFixturePath(fixturesfilenames[item.format]), 'utf-8');
     item.expectedData = data;
     const { expectedFilename } = item;
     const expectedPath = path.join(dest, filesdirname, expectedFilename);
@@ -91,15 +84,15 @@ describe('positive cases', () => {
   test('scope-isDone', async () => {
     const scope = nock(/ru\.hexlet\.io/)
       .get(/\/courses/)
-      .reply(200, body)
-      .get(imagePath)
-      .reply(200, image)
-      .get(scriptPath)
-      .reply(200, fixture.script)
-      .get(linkPath)
-      .reply(200, fixture.css)
-      .get('/courses')
-      .reply(200, body);
+      .replyWithFile(200, getFixturePath(fixturesfilenames.htmlMain))
+      .get(/\/assets\/professions\/nodejs\.png/)
+      .replyWithFile(200, getFixturePath(fixturesfilenames.image))
+      .get(/\/packs\/js\/runtime\.js/)
+      .replyWithFile(200, getFixturePath(fixturesfilenames.script))
+      .get(/\/assets\/application\.css/)
+      .replyWithFile(200, getFixturePath(fixturesfilenames.css))
+      .get(/\/courses/)
+      .replyWithFile(200, getFixturePath(fixturesfilenames.htmlSource));
     const scopeCheckDest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
     await loadHTML(url, scopeCheckDest);
     expect(scope.isDone()).toBe(true);
@@ -107,7 +100,7 @@ describe('positive cases', () => {
 });
 
 describe('negative-cases', () => {
-  test('http-errors', async () => {
+  test('http-errors - loadpage - status code 404', async () => {
     nock(/wrong\.url\.wrong/)
       .get(/no-response/)
       .replyWithError('Wrong url')
@@ -122,20 +115,26 @@ describe('negative-cases', () => {
     await expect(loadHTML('https://wrong.url.wrong/404', destForErrCase)).rejects.toThrow(/bad response/);
   });
 
-  test('fs-errors', async () => {
-    nock('https://validurl.ru')
+  test('fs-error: file does not exist', async () => {
+    nock(/\/validurl\.ru/)
       .get('/testerr')
-      .reply(200, body);
-    expect.assertions(2);
+      .replyWithFile(200, getFixturePath(fixturesfilenames.htmlMain));
+    expect.assertions(1);
 
     const fakedir = path.join(os.tmpdir(), makeRandomString());
-    const sys = '/sys';
 
     await expect(loadHTML('https://validurl.ru/testerr', fakedir)).rejects.toThrow(/ENOENT/);
-    await expect(loadHTML('https://validurl.ru/testerr', sys)).rejects.toThrow(/EACCES/);
   });
 
-  test('fs-error: file exist', async () => {
+  test('fs-error: access error', async () => {
+    nock(/\/validurl\.ru/)
+      .get('/testerr')
+      .replyWithFile(200, getFixturePath(fixturesfilenames.htmlMain));
+    expect.assertions(1);
+    await expect(loadHTML('https://validurl.ru/testerr', '/sys')).rejects.toThrow(/EACCES/);
+  });
+
+  test('fs-error: file exists', async () => {
     await expect(loadHTML(url, dest)).rejects.toThrow(/EEXIST/);
   });
 });
