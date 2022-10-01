@@ -68,8 +68,7 @@ const extractUrls = (html, baseURL) => {
   return urls;
 };
 
-const modifyHTML = async (filepath, baseURL) => {
-  const html = await fs.readFile(filepath, 'utf-8');
+const modifyHTML = (html, baseURL) => {
   const $ = cheerio.load(html);
   const dirname = buildSourceDirname(baseURL);
   tags.forEach(({ tagname, attr }) => {
@@ -85,7 +84,7 @@ const modifyHTML = async (filepath, baseURL) => {
   });
 
   const prettified = prettier.format($.html(), { parser: 'html' });
-  console.log(prettified);
+  return prettified;
 };
 
 const fileloader = (html, destToSaveFiles, baseURL) => {
@@ -120,7 +119,7 @@ export default (pageUrl, dest = process.cwd()) => {
     .then(() => axios.get(pageUrl))
     .then(({ data }) => {
       html = data;
-      const localHTML = replaceSources(data, baseURL);
+      const localHTML = modifyHTML(data, baseURL);
       // REPLACE SOURCES //
       const htmlFilename = buildmainHtmlFilename(baseURL, '/', true);
       const filepath = path.join(dest, htmlFilename);
