@@ -1,3 +1,5 @@
+/* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": true}] */
+
 import axios from 'axios';
 import { URL } from 'url';
 import path from 'path';
@@ -5,11 +7,13 @@ import { promises as fs } from 'fs';
 import debug from 'debug';
 import axiosDebug from 'axios-debug-log';
 import Listr from 'listr';
+import * as cheerio from 'cheerio';
+import prettier from 'prettier';
 
-import { buildSourceDirname, buildSourceFilename, buildmainHtmlFilename } from './buildpath.js';
+import {
+  buildSourceDirname, buildSourceFilename, buildmainHtmlFilename, buildSourcePath,
+} from './buildpath.js';
 import replaceSources from './modifyHTML.js';
-
-import extractUrls from './extractUrls.js';
 
 import { handleError } from './utils.js';
 
@@ -31,6 +35,58 @@ axiosDebug({
     httpDebug('Boom', error.message);
   },
 });
+
+const tags = [
+  { tagname: 'link', attr: 'href' },
+  { tagname: 'script', attr: 'src' },
+  { tagname: 'img', attr: 'src' },
+];
+
+const isLocal = (sourceLink, currentURL) => {
+  const sourceURL = new URL(sourceLink, currentURL.toString());
+  const sourceHost = sourceURL.host;
+  const currentHost = currentURL.host;
+
+  return currentHost === sourceHost;
+};
+
+const extractUrls = (html, baseURL) => {
+  const $ = cheerio.load(html);
+  const urls = tags.flatMap(({ tagname, attr }) => {
+    const tagsNodes = $(tagname);
+    const mapped = tagsNodes.map((_i, el) => {
+      const elem = $(el);
+      const src = elem.attr(attr);
+      const srcUrl = new URL(src, baseURL.toString()).toString();
+      if (isLocal(srcUrl, baseURL)) {
+        return { urlToFetchContent: srcUrl };
+      }
+      return null;
+    });
+    return mapped.toArray();
+  });
+  return urls;
+};
+
+const modifyHTML = async (filepath, baseURL) => {
+  const html = await fs.readFile(filepath, 'utf-8');
+  const $ = cheerio.load(html);
+  const dirname = buildSourceDirname(baseURL);
+  tags.forEach(({ tagname, attr }) => {
+    const nodes = $(tagname);
+    nodes.each((_i, el) => {
+      const elem = $(el);
+      const src = elem.attr(attr);
+      const srcUrl = new URL(src, baseURL.toString()).toString();
+      if (isLocal(srcUrl, baseURL)) {
+        elem.attr(attr, buildSourcePath(baseURL, src, dirname));
+      }
+    });
+  });
+
+  const prettified = prettier.format($.html(), { parser: 'html' });
+  console.log(prettified);
+};
 
 const fileloader = (html, destToSaveFiles, baseURL) => {
   const fetchDatas = extractUrls(html, baseURL);
