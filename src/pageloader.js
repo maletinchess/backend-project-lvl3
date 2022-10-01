@@ -18,8 +18,6 @@ import { handleError } from './utils.js';
 
 const log = debug('page-loader');
 
-const isDebugEnv = process.env.DEBUG;
-
 axiosDebug({
   request(httpDebug, config) {
     httpDebug(`Request with ${config.url}`);
@@ -86,23 +84,22 @@ const modifyHTML = (html, baseURL) => {
   return prettified;
 };
 
+const downloadAssets = (url, dirname, baseURL) => axios.get(url, { responseType: 'arraybuffer', validateStatus: (status) => status === 200 })
+  .then(({ data }) => {
+    const filename = buildSourceFilename(baseURL, url);
+    const fullPath = path.join(dirname, filename);
+    return fs.writeFile(fullPath, data);
+  })
+  .catch(handleError);
+
 const fileloader = (html, destToSaveFiles, baseURL) => {
   const fetchDatas = extractUrls(html, baseURL);
-  console.log(fetchDatas);
   const tasks = new Listr(
     fetchDatas.map(({ urlToFetchContent }) => {
-      const task = axios.get(urlToFetchContent, { responseType: 'arraybuffer', validateStatus: (status) => status === 200 })
-        .then(({ data }) => {
-          const filepath = path.join(
-            destToSaveFiles,
-            buildSourceFilename(baseURL, urlToFetchContent),
-          );
-          return fs.writeFile(filepath, data);
-        })
-        .catch(handleError);
+      const task = downloadAssets(urlToFetchContent, destToSaveFiles, baseURL);
       return { title: urlToFetchContent, task: () => task };
     }),
-    { concurrent: true, renderer: isDebugEnv ? 'silent' : 'default' },
+    { concurrent: true },
   );
 
   return tasks.run();
@@ -119,7 +116,6 @@ export default (pageUrl, dest = process.cwd()) => {
     .then(({ data }) => {
       html = data;
       const localHTML = modifyHTML(data, baseURL);
-      // REPLACE SOURCES //
       const htmlFilename = buildmainHtmlFilename(baseURL, '/', true);
       const filepath = path.join(dest, htmlFilename);
       output = path.resolve(process.cwd(), filepath);
