@@ -13,7 +13,6 @@ import prettier from 'prettier';
 import {
   buildSourceDirname, buildSourceFilename, buildmainHtmlFilename, buildSourcePath,
 } from './buildpath.js';
-import replaceSources from './modifyHTML.js';
 
 import { handleError } from './utils.js';
 
