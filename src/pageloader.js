@@ -81,7 +81,8 @@ const modifyHTML = (html, baseURL) => {
   });
 
   const prettified = prettier.format($.html(), { parser: 'html' });
-  return prettified;
+  console.log(prettified);
+  return $.html();
 };
 
 const downloadAssets = (url, dirname, baseURL) => axios.get(url, { responseType: 'arraybuffer', validateStatus: (status) => status === 200 })
@@ -117,7 +118,7 @@ export default (pageUrl, dest = process.cwd()) => {
     .then(({ data }) => {
       html = data;
       const localHTML = modifyHTML(data, baseURL);
-      const htmlFilename = buildmainHtmlFilename(baseURL, '/', true);
+      const htmlFilename = buildmainHtmlFilename(baseURL);
       const filepath = path.join(dest, htmlFilename);
       output = path.resolve(process.cwd(), filepath);
       log(`saving HTML to ${filepath}`);
@@ -128,8 +129,5 @@ export default (pageUrl, dest = process.cwd()) => {
       log(`saving sources ${destToSaveFiles}`);
       return fileloader(html, destToSaveFiles, baseURL);
     })
-    .then(() => output)
-    .catch((e) => {
-      handleError(e);
-    });
+    .then(() => output);
 };

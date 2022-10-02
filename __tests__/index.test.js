@@ -102,6 +102,7 @@ describe('positive cases', () => {
 
 describe('negative-cases', () => {
   test('http-errors - loadpage - status code 404', async () => {
+    // wrong url and 404 //
     nock(/wrong\.url\.wrong/)
       .get(/no-response/)
       .replyWithError('Wrong url')
