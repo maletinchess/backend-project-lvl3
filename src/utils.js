@@ -1,16 +1,14 @@
+/* eslint-disable no-console */
 export const handleAxiosError = (error) => {
   if (error.response) {
     console.error(error.message);
-    console.error(error.response.status);
-    console.error(error.response.headers);
     throw new Error('bad response');
   }
   throw new Error(`${error.message}`);
 };
 
 export const handleSystemError = (error) => {
-  const { code, path, syscall } = error;
-  console.error(code, path, syscall);
+  console.error(error.message);
   throw new Error(`${error.message}`);
 };
 

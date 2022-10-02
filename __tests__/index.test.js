@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint no-param-reassign: "error" */
 
 import os from 'os';
