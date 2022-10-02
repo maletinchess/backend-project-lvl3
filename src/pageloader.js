@@ -113,6 +113,7 @@ export default (pageUrl, dest = process.cwd()) => {
   const destToSaveFiles = path.join(dest, sourcesDirname);
   return fs.mkdir(destToSaveFiles)
     .then(() => axios.get(pageUrl))
+    .catch(handleError)
     .then(({ data }) => {
       html = data;
       const localHTML = modifyHTML(data, baseURL);
@@ -122,6 +123,7 @@ export default (pageUrl, dest = process.cwd()) => {
       log(`saving HTML to ${filepath}`);
       fs.writeFile(filepath, localHTML);
     })
+    .catch(handleError)
     .then(() => {
       log(`saving sources ${destToSaveFiles}`);
       return fileloader(html, destToSaveFiles, baseURL);

@@ -1,13 +1,3 @@
-import { URL } from 'url';
-
-const isLocal = (sourceLink, currentURL) => {
-  const sourceURL = new URL(sourceLink, currentURL.toString());
-  const sourceHost = sourceURL.host;
-  const currentHost = currentURL.host;
-
-  return currentHost === sourceHost;
-};
-
 export const handleAxiosError = (error) => {
   if (error.response) {
     console.error(error.message);
@@ -41,5 +31,3 @@ export const makeRandomString = (length = 5) => {
 
   return randomString;
 };
-
-export default isLocal;
