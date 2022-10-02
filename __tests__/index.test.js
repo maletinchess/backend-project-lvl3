@@ -1,11 +1,13 @@
 /* eslint-disable no-undef */
 /* eslint no-param-reassign: "error" */
+/* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": true}] */
 
 import os from 'os';
 import path, { dirname } from 'path';
 import { promises as fs } from 'fs';
 import nock from 'nock';
 import { fileURLToPath } from 'url';
+import prettier from 'prettier';
 import loadHTML from '../src/index.js';
 import { makeRandomString } from '../src/utils.js';
 
@@ -79,7 +81,8 @@ describe('positive cases', () => {
     const expectedPath = path.join(dest, expectedFilename);
     const actualHTML = await fs.readFile(expectedPath, 'utf-8');
     const expectedHTML = await fs.readFile(getFixturePath('expected-page-fixture.html'), 'utf-8');
-    expect(actualHTML.trim()).toEqual(expectedHTML.trim());
+    const prettified = prettier.format(actualHTML, { parser: 'html' });
+    expect(prettified.trim()).toEqual(expectedHTML.trim());
   });
 
   test('scope-isDone', async () => {

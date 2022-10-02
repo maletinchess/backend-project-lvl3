@@ -8,7 +8,6 @@ import debug from 'debug';
 import axiosDebug from 'axios-debug-log';
 import Listr from 'listr';
 import * as cheerio from 'cheerio';
-import prettier from 'prettier';
 
 import {
   buildSourceDirname, buildSourceFilename, buildmainHtmlFilename, buildSourcePath,
@@ -79,9 +78,6 @@ const modifyHTML = (html, baseURL) => {
       }
     });
   });
-
-  const prettified = prettier.format($.html(), { parser: 'html' });
-  console.log(prettified);
   return $.html();
 };
 
