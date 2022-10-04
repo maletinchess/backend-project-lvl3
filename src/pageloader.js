@@ -78,6 +78,7 @@ const modifyHTML = (html, baseURL) => {
       }
     });
   });
+
   return $.html();
 };
 
@@ -89,10 +90,9 @@ const downloadAssets = (url, dirname, baseURL) => axios.get(url, { responseType:
   })
   .catch(handleError);
 
-const fileloader = (html, destToSaveFiles, baseURL) => {
-  const fetchDatas = extractUrls(html, baseURL);
+const filesloader = (urls, destToSaveFiles, baseURL) => {
   const tasks = new Listr(
-    fetchDatas.map(({ urlToFetchContent }) => {
+    urls.map(({ urlToFetchContent }) => {
       const task = downloadAssets(urlToFetchContent, destToSaveFiles, baseURL);
       return { title: urlToFetchContent, task: () => task };
     }),
@@ -102,28 +102,30 @@ const fileloader = (html, destToSaveFiles, baseURL) => {
   return tasks.run();
 };
 
+export const getOutput = (pageUrl, dest) => {
+  const baseURL = new URL(pageUrl);
+  const filepath = path.join(dest, buildmainHtmlFilename(baseURL));
+  const output = path.resolve(process.cwd(), filepath);
+  return output;
+};
+
 export default (pageUrl, dest = process.cwd()) => {
-  let html;
-  let output;
   const baseURL = new URL(pageUrl);
   const sourcesDirname = buildSourceDirname(baseURL);
   const destToSaveFiles = path.join(dest, sourcesDirname);
   return fs.mkdir(destToSaveFiles)
+    .catch(handleError)
     .then(() => axios.get(pageUrl))
     .catch(handleError)
     .then(({ data }) => {
-      html = data;
+      const urls = extractUrls(data, baseURL);
       const localHTML = modifyHTML(data, baseURL);
       const htmlFilename = buildmainHtmlFilename(baseURL);
       const filepath = path.join(dest, htmlFilename);
-      output = path.resolve(process.cwd(), filepath);
       log(`saving HTML to ${filepath}`);
       fs.writeFile(filepath, localHTML);
-    })
-    .catch(handleError)
-    .then(() => {
       log(`saving sources ${destToSaveFiles}`);
-      return fileloader(html, destToSaveFiles, baseURL);
+      return filesloader(urls, destToSaveFiles, baseURL);
     })
-    .then(() => output);
+    .catch(handleError);
 };

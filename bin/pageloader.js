@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { program } from 'commander';
 import loadHTML from '../src/index.js';
+import { getOutput } from '../src/pageloader.js';
 
 program
   .version('0.0.1')
@@ -10,8 +11,8 @@ program
   .option('-o, --output [dir]', 'output dir', process.cwd())
   .action((url) => {
     loadHTML(url, program.opts().output)
-      .then((filename) => {
-        const message = `Page was successfully downloaded into ${filename}`;
+      .then(() => {
+        const message = `Page was successfully downloaded into ${getOutput(url, program.opts().output)}`;
         console.log(message);
       })
       .catch((e) => {
