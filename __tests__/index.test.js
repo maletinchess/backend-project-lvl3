@@ -9,14 +9,13 @@ import nock from 'nock';
 import { fileURLToPath } from 'url';
 import prettier from 'prettier';
 import loadHTML from '../src/index.js';
-import { makeRandomString } from '../src/utils.js';
 
 /* eslint-disable no-underscore-dangle */
 const __filename = fileURLToPath(import.meta.url);
 /* eslint-disable no-underscore-dangle */
 const __dirname = dirname(__filename);
 
-const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
+const buildFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
 
 let dest;
 
@@ -51,15 +50,15 @@ nock.disableNetConnect();
 beforeEach(async () => {
   nock(/ru\.hexlet\.io/)
     .get(/\/courses/)
-    .replyWithFile(200, getFixturePath(fixturesfilenames.htmlMain))
+    .replyWithFile(200, buildFixturePath(fixturesfilenames.htmlMain))
     .get(/\/assets\/professions\/nodejs\.png/)
-    .replyWithFile(200, getFixturePath(fixturesfilenames.image))
+    .replyWithFile(200, buildFixturePath(fixturesfilenames.image))
     .get(/\/packs\/js\/runtime\.js/)
-    .replyWithFile(200, getFixturePath(fixturesfilenames.script))
+    .replyWithFile(200, buildFixturePath(fixturesfilenames.script))
     .get(/\/assets\/application\.css/)
-    .replyWithFile(200, getFixturePath(fixturesfilenames.css))
+    .replyWithFile(200, buildFixturePath(fixturesfilenames.css))
     .get(/\/courses/)
-    .replyWithFile(200, getFixturePath(fixturesfilenames.htmlSource));
+    .replyWithFile(200, buildFixturePath(fixturesfilenames.htmlSource));
 
   dest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
@@ -68,7 +67,7 @@ beforeEach(async () => {
 
 describe('positive cases', () => {
   test.each(formats)('$format load', async (item) => {
-    const data = await fs.readFile(getFixturePath(fixturesfilenames[item.format]), 'utf-8');
+    const data = await fs.readFile(buildFixturePath(fixturesfilenames[item.format]), 'utf-8');
     item.expectedData = data;
     const { expectedFilename } = item;
     const expectedPath = path.join(dest, filesdirname, expectedFilename);
@@ -80,23 +79,23 @@ describe('positive cases', () => {
     const expectedFilename = 'ru-hexlet-io-courses.html';
     const expectedPath = path.join(dest, expectedFilename);
     const actualHTML = await fs.readFile(expectedPath, 'utf-8');
-    const expectedHTML = await fs.readFile(getFixturePath('expected-page-fixture.html'), 'utf-8');
+    const expectedHTML = await fs.readFile(buildFixturePath('expected-page-fixture.html'), 'utf-8');
     const prettified = prettier.format(actualHTML, { parser: 'html' });
     expect(prettified.trim()).toEqual(expectedHTML.trim());
   });
 
-  test('scope-isDone', async () => {
+  test('get sources', async () => {
     const scope = nock(/ru\.hexlet\.io/)
       .get(/\/courses/)
-      .replyWithFile(200, getFixturePath(fixturesfilenames.htmlMain))
+      .replyWithFile(200, buildFixturePath(fixturesfilenames.htmlMain))
       .get(/\/assets\/professions\/nodejs\.png/)
-      .replyWithFile(200, getFixturePath(fixturesfilenames.image))
+      .replyWithFile(200, buildFixturePath(fixturesfilenames.image))
       .get(/\/packs\/js\/runtime\.js/)
-      .replyWithFile(200, getFixturePath(fixturesfilenames.script))
+      .replyWithFile(200, buildFixturePath(fixturesfilenames.script))
       .get(/\/assets\/application\.css/)
-      .replyWithFile(200, getFixturePath(fixturesfilenames.css))
+      .replyWithFile(200, buildFixturePath(fixturesfilenames.css))
       .get(/\/courses/)
-      .replyWithFile(200, getFixturePath(fixturesfilenames.htmlSource));
+      .replyWithFile(200, buildFixturePath(fixturesfilenames.htmlSource));
     const scopeCheckDest = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
     await loadHTML(url, scopeCheckDest);
     expect(scope.isDone()).toBe(true);
@@ -123,10 +122,10 @@ describe('negative-cases', () => {
   test('fs-error: file does not exist', async () => {
     nock(/\/validurl\.ru/)
       .get('/testerr')
-      .replyWithFile(200, getFixturePath(fixturesfilenames.htmlMain));
+      .replyWithFile(200, buildFixturePath(fixturesfilenames.htmlMain));
     expect.assertions(1);
 
-    const fakedir = path.join(os.tmpdir(), makeRandomString());
+    const fakedir = path.join(os.tmpdir(), 'FAKEDIR');
 
     await expect(loadHTML('https://validurl.ru/testerr', fakedir)).rejects.toThrow(/ENOENT/);
   });
@@ -134,7 +133,7 @@ describe('negative-cases', () => {
   test('fs-error: access error', async () => {
     nock(/\/validurl\.ru/)
       .get('/testerr')
-      .replyWithFile(200, getFixturePath(fixturesfilenames.htmlMain));
+      .replyWithFile(200, buildFixturePath(fixturesfilenames.htmlMain));
     expect.assertions(1);
     await expect(loadHTML('https://validurl.ru/testerr', '/sys')).rejects.toThrow(/EACCES/);
   });

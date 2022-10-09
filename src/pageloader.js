@@ -1,5 +1,7 @@
 /* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": true}] */
 
+/* eslint-disable no-console */
+
 import axios from 'axios';
 import { URL } from 'url';
 import path from 'path';
@@ -12,8 +14,6 @@ import * as cheerio from 'cheerio';
 import {
   buildSourceDirname, buildSourceFilename, buildmainHtmlFilename, buildSourcePath,
 } from './buildpath.js';
-
-import { handleError } from './utils.js';
 
 const log = debug('page-loader');
 
@@ -37,6 +37,15 @@ const tags = [
   { tagname: 'script', attr: 'src' },
   { tagname: 'img', attr: 'src' },
 ];
+
+const handleError = (e) => {
+  if (e.isAxiosError && e.response) {
+    console.error(e.message);
+    throw new Error('bad response');
+  }
+  console.error(e.message);
+  throw new Error(`${e.message}`);
+};
 
 const isLocal = (sourceLink, currentURL) => {
   const sourceURL = new URL(sourceLink, currentURL.toString());
@@ -114,9 +123,7 @@ export default (pageUrl, dest = process.cwd()) => {
   const sourcesDirname = buildSourceDirname(baseURL);
   const destToSaveFiles = path.join(dest, sourcesDirname);
   return fs.mkdir(destToSaveFiles)
-    .catch(handleError)
     .then(() => axios.get(pageUrl))
-    .catch(handleError)
     .then(({ data }) => {
       const urls = extractUrls(data, baseURL);
       const localHTML = modifyHTML(data, baseURL);
@@ -124,6 +131,9 @@ export default (pageUrl, dest = process.cwd()) => {
       const filepath = path.join(dest, htmlFilename);
       log(`saving HTML to ${filepath}`);
       fs.writeFile(filepath, localHTML);
+      return urls;
+    })
+    .then((urls) => {
       log(`saving sources ${destToSaveFiles}`);
       return filesloader(urls, destToSaveFiles, baseURL);
     })
