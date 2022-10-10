@@ -96,20 +96,14 @@ const downloadAssets = (url, dirname, baseURL) => axios.get(url, { responseType:
     const filename = buildSourceFilename(baseURL, url);
     const fullPath = path.join(dirname, filename);
     return fs.writeFile(fullPath, data);
-  })
-  .catch(handleError);
+  });
 
-const filesloader = (urls, destToSaveFiles, baseURL) => {
-  const tasks = new Listr(
-    urls.map(({ urlToFetchContent }) => {
-      const task = downloadAssets(urlToFetchContent, destToSaveFiles, baseURL);
-      return { title: urlToFetchContent, task: () => task };
-    }),
-    { concurrent: true },
-  );
-
-  return tasks.run();
-};
+const wrapLoadingToListr = (downloadFunction) => (urls, dirname, baseUrl) => new Listr(
+  urls.map(({ urlToFetchContent }) => {
+    const task = downloadFunction(urlToFetchContent, dirname, baseUrl);
+    return { title: urlToFetchContent, task: () => task };
+  }),
+).run();
 
 export const getOutput = (pageUrl, dest) => {
   const baseURL = new URL(pageUrl);
@@ -120,9 +114,11 @@ export const getOutput = (pageUrl, dest) => {
 
 export default (pageUrl, dest = process.cwd()) => {
   const baseURL = new URL(pageUrl);
-  const sourcesDirname = buildSourceDirname(baseURL);
-  const destToSaveFiles = path.join(dest, sourcesDirname);
-  return fs.mkdir(destToSaveFiles)
+  const assetsDirname = buildSourceDirname(baseURL);
+  const assetsOutputPath = path.join(dest, assetsDirname);
+
+  return fs.access(assetsOutputPath)
+    .catch(() => fs.mkdir(assetsOutputPath))
     .then(() => axios.get(pageUrl))
     .then(({ data }) => {
       const urls = extractUrls(data, baseURL);
@@ -130,12 +126,12 @@ export default (pageUrl, dest = process.cwd()) => {
       const htmlFilename = buildmainHtmlFilename(baseURL);
       const filepath = path.join(dest, htmlFilename);
       log(`saving HTML to ${filepath}`);
-      fs.writeFile(filepath, localHTML);
-      return urls;
+      return fs.writeFile(filepath, localHTML).then(() => urls);
     })
     .then((urls) => {
-      log(`saving sources ${destToSaveFiles}`);
-      return filesloader(urls, destToSaveFiles, baseURL);
+      console.log(urls);
+      log(`saving assets to ${assetsOutputPath}`);
+      return wrapLoadingToListr(downloadAssets)(urls, assetsOutputPath, baseURL);
     })
     .catch(handleError);
 };

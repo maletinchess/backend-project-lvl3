@@ -84,7 +84,7 @@ describe('positive cases', () => {
     expect(prettified.trim()).toEqual(expectedHTML.trim());
   });
 
-  test('get sources', async () => {
+  test('fetch assets', async () => {
     const scope = nock(/ru\.hexlet\.io/)
       .get(/\/courses/)
       .replyWithFile(200, buildFixturePath(fixturesfilenames.htmlMain))
@@ -102,7 +102,7 @@ describe('positive cases', () => {
   });
 });
 
-describe('negative-cases', () => {
+describe('negative cases', () => {
   test('http-errors - loadpage - status code 404', async () => {
     // wrong url and 404 //
     nock(/wrong\.url\.wrong/)
