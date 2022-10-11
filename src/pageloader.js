@@ -12,7 +12,7 @@ import Listr from 'listr';
 import * as cheerio from 'cheerio';
 
 import {
-  buildSourceDirname, buildSourceFilename, buildmainHtmlFilename, buildSourcePath,
+  buildAssetsDirname, buildAssetFilename, buildmainHtmlFilename, buildAssetPath,
 } from './buildpath.js';
 
 const log = debug('page-loader');
@@ -75,7 +75,7 @@ const extractUrls = (html, baseURL) => {
 
 const modifyHTML = (html, baseURL) => {
   const $ = cheerio.load(html);
-  const dirname = buildSourceDirname(baseURL);
+  const dirname = buildAssetsDirname(baseURL);
   tags.forEach(({ tagname, attr }) => {
     const nodes = $(tagname);
     nodes.each((_i, el) => {
@@ -83,7 +83,7 @@ const modifyHTML = (html, baseURL) => {
       const src = elem.attr(attr);
       const srcUrl = new URL(src, baseURL.toString()).toString();
       if (isLocal(srcUrl, baseURL)) {
-        elem.attr(attr, buildSourcePath(baseURL, src, dirname));
+        elem.attr(attr, buildAssetPath(baseURL, src, dirname));
       }
     });
   });
@@ -93,19 +93,19 @@ const modifyHTML = (html, baseURL) => {
 
 const downloadAssets = (url, dirname, baseURL) => axios.get(url, { responseType: 'arraybuffer', validateStatus: (status) => status === 200 })
   .then(({ data }) => {
-    const filename = buildSourceFilename(baseURL, url);
+    const filename = buildAssetFilename(baseURL, url);
     const fullPath = path.join(dirname, filename);
     return fs.writeFile(fullPath, data);
   });
 
-const wrapLoadingToListr = (downloadFunction) => (urls, dirname, baseUrl) => new Listr(
+const wrapLoadingToListr = (urls, dirname, baseUrl) => new Listr(
   urls.map(({ urlToFetchContent }) => {
-    const task = downloadFunction(urlToFetchContent, dirname, baseUrl);
+    const task = downloadAssets(urlToFetchContent, dirname, baseUrl);
     return { title: urlToFetchContent, task: () => task };
   }),
 ).run();
 
-export const getOutput = (pageUrl, dest) => {
+export const buildOutputPath = (pageUrl, dest) => {
   const baseURL = new URL(pageUrl);
   const filepath = path.join(dest, buildmainHtmlFilename(baseURL));
   const output = path.resolve(process.cwd(), filepath);
@@ -114,7 +114,7 @@ export const getOutput = (pageUrl, dest) => {
 
 export default (pageUrl, dest = process.cwd()) => {
   const baseURL = new URL(pageUrl);
-  const assetsDirname = buildSourceDirname(baseURL);
+  const assetsDirname = buildAssetsDirname(baseURL);
   const assetsOutputPath = path.join(dest, assetsDirname);
 
   return fs.access(assetsOutputPath)
@@ -129,9 +129,8 @@ export default (pageUrl, dest = process.cwd()) => {
       return fs.writeFile(filepath, localHTML).then(() => urls);
     })
     .then((urls) => {
-      console.log(urls);
       log(`saving assets to ${assetsOutputPath}`);
-      return wrapLoadingToListr(downloadAssets)(urls, assetsOutputPath, baseURL);
+      return wrapLoadingToListr(urls, assetsOutputPath, baseURL);
     })
     .catch(handleError);
 };

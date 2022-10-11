@@ -137,8 +137,4 @@ describe('negative cases', () => {
     expect.assertions(1);
     await expect(loadHTML('https://validurl.ru/testerr', '/sys')).rejects.toThrow(/EACCES/);
   });
-
-  test('fs-error: file exists', async () => {
-    await expect(loadHTML(url, dest)).rejects.toThrow(/EEXIST/);
-  });
 });

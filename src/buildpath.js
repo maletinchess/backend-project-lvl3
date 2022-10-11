@@ -35,7 +35,7 @@ export const buildmainHtmlFilename = (baseURL) => {
   return `${mapFilename(modifiedUrl)}.html`;
 };
 
-export const buildSourceFilename = (baseURL, input = '/') => {
+export const buildAssetFilename = (baseURL, input = '/') => {
   const sourceURL = new URL(input, baseURL);
   const modifiedUrl = removeProtocol(sourceURL);
   const mappedFileName = mapFilename(modifiedUrl);
@@ -45,12 +45,12 @@ export const buildSourceFilename = (baseURL, input = '/') => {
   return mappedFileName;
 };
 
-export const buildSourceDirname = (baseURL) => {
+export const buildAssetsDirname = (baseURL) => {
   const modifiedUrl = removeProtocol(baseURL);
   return `${mapFilename(modifiedUrl)}_files`;
 };
 
-export const buildSourcePath = (baseURL, input, dirname) => path.join(
+export const buildAssetPath = (baseURL, input, dirname) => path.join(
   dirname,
-  buildSourceFilename(baseURL, input),
+  buildAssetFilename(baseURL, input),
 );
