@@ -1,7 +1,3 @@
-/* eslint import/no-extraneous-dependencies: ["error", {"devDependencies": true}] */
-
-/* eslint-disable no-console */
-
 import axios from 'axios';
 import { URL } from 'url';
 import path from 'path';
@@ -40,10 +36,8 @@ const tags = [
 
 const handleError = (e) => {
   if (e.isAxiosError && e.response) {
-    console.error(e.message);
     throw new Error('bad response');
   }
-  console.error(e.message);
   throw new Error(`${e.message}`);
 };
 
@@ -98,12 +92,16 @@ const downloadAssets = (url, dirname, baseURL) => axios.get(url, { responseType:
     return fs.writeFile(fullPath, data);
   });
 
-const wrapLoadingToListr = (urls, dirname, baseUrl) => new Listr(
-  urls.map(({ urlToFetchContent }) => {
+const wrapLoadingToListr = (urls, dirname, baseUrl) => {
+  const tasks = urls.map(({ urlToFetchContent }) => {
     const task = downloadAssets(urlToFetchContent, dirname, baseUrl);
     return { title: urlToFetchContent, task: () => task };
-  }),
+  });
+  return new Listr(
+  tasks,
+  { concurent: true },
 ).run();
+};
 
 export const buildOutputPath = (pageUrl, dest) => {
   const baseURL = new URL(pageUrl);
