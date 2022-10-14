@@ -98,9 +98,9 @@ const wrapLoadingToListr = (urls, dirname, baseUrl) => {
     return { title: urlToFetchContent, task: () => task };
   });
   return new Listr(
-  tasks,
-  { concurent: true },
-).run();
+    tasks,
+    { concurent: true },
+  ).run();
 };
 
 export const buildOutputPath = (pageUrl, dest) => {
