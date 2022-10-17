@@ -1,9 +1,7 @@
 /* eslint no-param-reassign: "error" */
 
 import path from 'path';
-import url from 'url';
-
-const { URL } = url;
+import { URL } from 'url';
 
 const replaceSymbols = (word) => word
   .split('')
@@ -54,3 +52,28 @@ export const buildAssetPath = (baseURL, input, dirname) => path.join(
   dirname,
   buildAssetFilename(baseURL, input),
 );
+
+export const processName = (filename) => {
+  const mappedFilename = replaceSymbols(filename);
+  return mappedFilename;
+};
+
+export const urlToFilename = (url) => {
+  const urlWithoutProtocol = removeProtocol(new URL(url));
+  const parsed = path.parse(urlWithoutProtocol);
+  const { dir, name, ext } = parsed;
+  const filename = `${processName(path.join(dir, name))}`;
+  const processed = processName(filename);
+  if (ext === '') {
+    return `${processed}.html`;
+  }
+  return `${processed}${ext}`;
+};
+
+export const urlToDirname = (url) => {
+  const urlObject = new URL(url);
+  const { hostname, pathname } = urlObject;
+  const urlWithoutProtocol = pathname === '/' ? hostname : path.join(hostname, pathname);
+  const processed = `${processName(urlWithoutProtocol)}`;
+  return `${processed}_files`;
+};
