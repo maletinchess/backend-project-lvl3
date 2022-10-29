@@ -28,11 +28,11 @@ axiosDebug({
   },
 });
 
-const tags = [
-  { tagname: 'link', attr: 'href' },
-  { tagname: 'script', attr: 'src' },
-  { tagname: 'img', attr: 'src' },
-];
+const attributeByTag = {
+  link: 'href',
+  script: 'src',
+  img: 'src',
+};
 
 const handleError = (e) => {
   if (e.isAxiosError && e.response) {
@@ -49,40 +49,23 @@ const isLocal = (sourceLink, currentURL) => {
   return currentHost === sourceHost;
 };
 
-const extractUrls = (html, baseURL) => {
+const prepareAssets = (html, origin, dir) => {
   const $ = cheerio.load(html);
-  const urls = tags.flatMap(({ tagname, attr }) => {
-    const tagsNodes = $(tagname);
-    const mapped = tagsNodes.map((_i, el) => {
-      const elem = $(el);
-      const src = elem.attr(attr);
-      const srcUrl = new URL(src, baseURL.toString()).toString();
-      if (isLocal(srcUrl, baseURL)) {
-        return { urlToFetchContent: srcUrl };
-      }
-      return null;
-    });
-    return mapped.toArray();
-  });
-  return urls;
-};
-
-const modifyHTML = (html, baseURL) => {
-  const $ = cheerio.load(html);
-  const dirname = buildAssetsDirname(baseURL);
-  tags.forEach(({ tagname, attr }) => {
-    const nodes = $(tagname);
+  const assets = [];
+  const entries = Object.entries(attributeByTag);
+  entries.forEach(([tag, attr]) => {
+    const nodes = $(tag);
     nodes.each((_i, el) => {
       const elem = $(el);
       const src = elem.attr(attr);
-      const srcUrl = new URL(src, baseURL.toString()).toString();
-      if (isLocal(srcUrl, baseURL)) {
-        elem.attr(attr, buildAssetPath(baseURL, src, dirname));
+      const srcUrl = new URL(src, origin.toString()).toString();
+      if (isLocal(srcUrl, origin)) {
+        assets.push(srcUrl);
+        elem.attr(attr, buildAssetPath(origin, src, dir));
       }
     });
   });
-
-  return $.html();
+  return { html: $.html(), assets };
 };
 
 const downloadAssets = (url, dirname, baseURL) => axios.get(url, { responseType: 'arraybuffer', validateStatus: (status) => status === 200 })
@@ -93,9 +76,9 @@ const downloadAssets = (url, dirname, baseURL) => axios.get(url, { responseType:
   });
 
 const wrapLoadingToListr = (urls, dirname, baseUrl) => {
-  const tasks = urls.map(({ urlToFetchContent }) => {
-    const task = downloadAssets(urlToFetchContent, dirname, baseUrl);
-    return { title: urlToFetchContent, task: () => task };
+  const tasks = urls.map((u) => {
+    const task = downloadAssets(u, dirname, baseUrl);
+    return { title: u, task: () => task };
   });
   return new Listr(
     tasks,
@@ -119,12 +102,11 @@ export default (pageUrl, dest = process.cwd()) => {
     .catch(() => fs.mkdir(assetsOutputPath))
     .then(() => axios.get(pageUrl))
     .then(({ data }) => {
-      const urls = extractUrls(data, baseURL);
-      const localHTML = modifyHTML(data, baseURL);
       const htmlFilename = buildmainHtmlFilename(baseURL);
+      const { html, assets } = prepareAssets(data, baseURL, assetsDirname);
       const filepath = path.join(dest, htmlFilename);
       log(`saving HTML to ${filepath}`);
-      return fs.writeFile(filepath, localHTML).then(() => urls);
+      return fs.writeFile(filepath, html).then(() => assets);
     })
     .then((urls) => {
       log(`saving assets to ${assetsOutputPath}`);
