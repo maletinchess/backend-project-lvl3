@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 
-import { processName, urlToFilename, urlToDirname } from '../src/buildpath.js';
+import { processName, urlToFilename, urlToDirname } from '../src/utils.js';
 
 test('processName', () => {
   const expected1 = 'ru-hexlet-io-courses';

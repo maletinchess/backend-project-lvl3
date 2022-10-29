@@ -8,8 +8,9 @@ import Listr from 'listr';
 import * as cheerio from 'cheerio';
 
 import {
-  buildAssetsDirname, buildAssetFilename, buildmainHtmlFilename, buildAssetPath,
-} from './buildpath.js';
+  urlToDirname,
+  urlToFilename,
+} from './utils.js';
 
 const log = debug('page-loader');
 
@@ -49,7 +50,7 @@ const isLocal = (sourceLink, currentURL) => {
   return currentHost === sourceHost;
 };
 
-const prepareAssets = (html, origin, dir) => {
+const prepareAssets = (html, origin) => {
   const $ = cheerio.load(html);
   const assets = [];
   const entries = Object.entries(attributeByTag);
@@ -60,24 +61,25 @@ const prepareAssets = (html, origin, dir) => {
       const src = elem.attr(attr);
       const srcUrl = new URL(src, origin.toString()).toString();
       if (isLocal(srcUrl, origin)) {
+        const newPath = path.join(urlToDirname(origin), urlToFilename(srcUrl));
         assets.push(srcUrl);
-        elem.attr(attr, buildAssetPath(origin, src, dir));
+        elem.attr(attr, newPath);
       }
     });
   });
   return { html: $.html(), assets };
 };
 
-const downloadAssets = (url, dirname, baseURL) => axios.get(url, { responseType: 'arraybuffer', validateStatus: (status) => status === 200 })
+const downloadAssets = (url, dirname) => axios.get(url, { responseType: 'arraybuffer', validateStatus: (status) => status === 200 })
   .then(({ data }) => {
-    const filename = buildAssetFilename(baseURL, url);
+    const filename = urlToFilename(url);
     const fullPath = path.join(dirname, filename);
     return fs.writeFile(fullPath, data);
   });
 
-const wrapLoadingToListr = (urls, dirname, baseUrl) => {
+const wrapLoadingToListr = (urls, dirname) => {
   const tasks = urls.map((u) => {
-    const task = downloadAssets(u, dirname, baseUrl);
+    const task = downloadAssets(u, dirname);
     return { title: u, task: () => task };
   });
   return new Listr(
@@ -87,30 +89,29 @@ const wrapLoadingToListr = (urls, dirname, baseUrl) => {
 };
 
 export const buildOutputPath = (pageUrl, dest) => {
-  const baseURL = new URL(pageUrl);
-  const filepath = path.join(dest, buildmainHtmlFilename(baseURL));
+  const filepath = path.join(dest, urlToFilename(pageUrl));
   const output = path.resolve(process.cwd(), filepath);
   return output;
 };
 
 export default (pageUrl, dest = process.cwd()) => {
   const baseURL = new URL(pageUrl);
-  const assetsDirname = buildAssetsDirname(baseURL);
+  const assetsDirname = urlToDirname(baseURL);
   const assetsOutputPath = path.join(dest, assetsDirname);
 
   return fs.access(assetsOutputPath)
     .catch(() => fs.mkdir(assetsOutputPath))
     .then(() => axios.get(pageUrl))
     .then(({ data }) => {
-      const htmlFilename = buildmainHtmlFilename(baseURL);
-      const { html, assets } = prepareAssets(data, baseURL, assetsDirname);
+      const htmlFilename = urlToFilename(pageUrl);
+      const { html, assets } = prepareAssets(data, baseURL);
       const filepath = path.join(dest, htmlFilename);
       log(`saving HTML to ${filepath}`);
       return fs.writeFile(filepath, html).then(() => assets);
     })
     .then((urls) => {
       log(`saving assets to ${assetsOutputPath}`);
-      return wrapLoadingToListr(urls, assetsOutputPath, baseURL);
+      return wrapLoadingToListr(urls, assetsOutputPath);
     })
     .catch(handleError);
 };
