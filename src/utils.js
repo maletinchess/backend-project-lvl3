@@ -22,7 +22,7 @@ const removeProtocolFromUrl = (url) => {
 export const urlToFilename = (url) => {
   const urlWithoutProtocol = removeProtocolFromUrl(url);
   const { dir, name, ext } = path.parse(urlWithoutProtocol);
-  const filename = `${processName(path.join(dir, name))}`;
+  const filename = path.join(dir, name);
   const processed = processName(filename);
   if (ext === '') {
     return `${processed}.html`;

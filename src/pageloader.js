@@ -42,31 +42,31 @@ const handleError = (e) => {
   throw new Error(`${e.message}`);
 };
 
-const isLocal = (sourceLink, currentURL) => {
-  const sourceURL = new URL(sourceLink, currentURL.toString());
-  const sourceHost = sourceURL.host;
-  const currentHost = currentURL.host;
-
-  return currentHost === sourceHost;
-};
-
 const prepareAssets = (html, origin) => {
   const $ = cheerio.load(html);
   const assets = [];
-  const entries = Object.entries(attributeByTag);
-  entries.forEach(([tag, attr]) => {
-    const nodes = $(tag);
-    nodes.each((_i, el) => {
-      const elem = $(el);
-      const src = elem.attr(attr);
-      const srcUrl = new URL(src, origin.toString()).toString();
-      if (isLocal(srcUrl, origin)) {
-        const newPath = path.join(urlToDirname(origin), urlToFilename(srcUrl));
-        assets.push(srcUrl);
-        elem.attr(attr, newPath);
-      }
-    });
+  const nodes = Object.keys(attributeByTag).flatMap(
+    (tag) => $(tag)
+      .map((_i, el) => {
+        const node = $(el);
+        const attr = attributeByTag[tag];
+        const src = node.attr(attr);
+        const newSrc = new URL(src, origin.toString()).toString();
+        node.attr(attr, newSrc);
+        return { node, attr };
+      })
+      .toArray(),
+  );
+
+  nodes.forEach(({ node, attr }) => {
+    const src = node.attr(attr);
+    if (new URL(src).host === origin.host) {
+      const newPath = path.join(urlToDirname(origin.toString()), urlToFilename(src));
+      assets.push(src);
+      node.attr(attr, newPath);
+    }
   });
+
   return { html: $.html(), assets };
 };
 
