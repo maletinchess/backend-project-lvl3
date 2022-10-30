@@ -1,9 +1,7 @@
-/* eslint no-param-reassign: "error" */
-
 import path from 'path';
 import { URL } from 'url';
 
-export const processName = (filename) => filename
+export const processName = (name) => name
   .split('')
   .map((item) => {
     if (item.match(/\d/) || item.match(/\w/)) {
@@ -12,18 +10,11 @@ export const processName = (filename) => filename
     return '-';
   }).join('');
 
-const removeProtocolFromUrl = (url) => {
-  const urlObject = new URL(url);
-  const { hostname, pathname } = urlObject;
-  const urlWithoutProtocol = pathname === '/' ? hostname : path.join(hostname, pathname);
-  return urlWithoutProtocol;
-};
-
 export const urlToFilename = (url) => {
-  const urlWithoutProtocol = removeProtocolFromUrl(url);
-  const { dir, name, ext } = path.parse(urlWithoutProtocol);
-  const filename = path.join(dir, name);
-  const processed = processName(filename);
+  const { hostname, pathname } = new URL(url);
+  const { dir, name, ext } = path.parse(pathname);
+  const base = path.join(hostname, dir, name);
+  const processed = processName(base);
   if (ext === '') {
     return `${processed}.html`;
   }
@@ -31,7 +22,8 @@ export const urlToFilename = (url) => {
 };
 
 export const urlToDirname = (url) => {
-  const urlWithoutProtocol = removeProtocolFromUrl(url);
-  const processed = `${processName(urlWithoutProtocol)}`;
+  const { hostname, pathname } = new URL(url);
+  const base = pathname === '/' ? hostname : path.join(hostname, pathname);
+  const processed = `${processName(base)}`;
   return `${processed}_files`;
 };
